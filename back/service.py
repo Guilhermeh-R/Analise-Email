@@ -2,23 +2,19 @@ from PyPDF2 import PdfReader
 from transformers import pipeline
 from deep_translator import GoogleTranslator
 import requests
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, GPT2LMHeadModel
 import torch
 from transformers import GPT2LMHeadModel
 
 
-#Modelo classificador
-model_path = "./modelo_classificador"
-tokenizer = AutoTokenizer.from_pretrained(model_path)
-model = AutoModelForSequenceClassification.from_pretrained(model_path)
+# Modelo classificador direto do HF
+tokenizer = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_classificador")
+model = AutoModelForSequenceClassification.from_pretrained("Guilhermeh-r/modelo_classificador")
 model.eval()  # modo avaliação
-#Classificador e labels
 
-#Modelo geração texto
-
-model_email_path = "./modelo_geracao"  # pasta onde salvou no fine-tuning
-tokenizer_email = AutoTokenizer.from_pretrained(model_email_path)
-model_email = GPT2LMHeadModel.from_pretrained(model_email_path)
+# Modelo de geração de texto direto do HF
+tokenizer_email = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_geracao")
+model_email = GPT2LMHeadModel.from_pretrained("Guilhermeh-r/modelo_geracao")
 model_email.eval()
 
 #classificar = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
