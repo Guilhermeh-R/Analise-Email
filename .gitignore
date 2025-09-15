@@ -1,0 +1,64 @@
+# -------------------------
+# Node.js
+# -------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build / Output
+dist/
+build/
+.cache/
+.next/
+out/
+
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+.env
+.venv/
+venv/
+ENV/
+env/
+.ipynb_checkpoints
+
+# Modelos de IA
+*.pt
+*.bin
+modelo_classificador/
+modelo_gerador/
+
+# -------------------------
+# Logs
+# -------------------------
+*.log
+logs/
+*.out
+*.err
+
+# -------------------------
+# Sistema / IDE
+# -------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# -------------------------
+# Outros
+# -------------------------
+*.app
+*.flf
+*.g.xlf
+rad.json
+TestResults.xml
