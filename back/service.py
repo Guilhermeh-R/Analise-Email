@@ -2,6 +2,9 @@ import os
 import requests
 from PyPDF2 import PdfReader
 from deep_translator import GoogleTranslator
+from dotenv import load_dotenv
+
+load_dotenv()
 
 HF_TOKEN = os.getenv("HF_TOKEN")  # export HF_TOKEN=seu_token
 headers = {"Authorization": f"Bearer {HF_TOKEN}"}
