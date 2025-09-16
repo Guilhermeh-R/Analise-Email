@@ -16,8 +16,8 @@ _generator = None
 def get_classifier():
     global _classifier
     if _classifier is None:
-        tokenizer = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_classificador")
-        model = AutoModelForSequenceClassification.from_pretrained("Guilhermeh-r/modelo_classificador")
+        tokenizer = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_classificador",token=HF_TOKEN)
+        model = AutoModelForSequenceClassification.from_pretrained("Guilhermeh-r/modelo_classificador",token=HF_TOKEN)
         model.eval()
         _classifier = (tokenizer, model)
     return _classifier
@@ -25,8 +25,8 @@ def get_classifier():
 def get_generator():
     global _generator
     if _generator is None:
-        tokenizer_email = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_gerador")
-        model_email = GPT2LMHeadModel.from_pretrained("Guilhermeh-r/modelo_gerador")
+        tokenizer_email = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_gerador",token=HF_TOKEN)
+        model_email = GPT2LMHeadModel.from_pretrained("Guilhermeh-r/modelo_gerador",token=HF_TOKEN)
         model_email.eval()
         _generator = (tokenizer_email, model_email)
     return _generator
