@@ -1,75 +1,50 @@
+import os
+import requests
 from PyPDF2 import PdfReader
 from deep_translator import GoogleTranslator
-import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, GPT2LMHeadModel
 
-# Variáveis globais para carregamento sob demanda
-_classifier = None
-_generator = None
+HF_TOKEN = os.getenv("HF_TOKEN")  # export HF_TOKEN=seu_token
+headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 
-def get_classifier():
-    global _classifier
-    if _classifier is None:
-        tokenizer = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_classificador")
-        model = AutoModelForSequenceClassification.from_pretrained("Guilhermeh-r/modelo_classificador")
-        model.eval()
-        _classifier = (tokenizer, model)
-    return _classifier
+CLASSIFIER_URL = "https://api-inference.huggingface.co/models/Guilhermeh-r/modelo_classificador"
+GENERATOR_URL = "https://api-inference.huggingface.co/models/Guilhermeh-r/modelo_gerador"
 
-def get_generator():
-    global _generator
-    if _generator is None:
-        tokenizer_email = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_geracao")
-        model_email = GPT2LMHeadModel.from_pretrained("Guilhermeh-r/modelo_geracao")
-        model_email.eval()
-        _generator = (tokenizer_email, model_email)
-    return _generator
+# Chama Hugging Face API
+def query_hf(api_url, payload):
+    response = requests.post(api_url, headers=headers, json=payload)
+    if response.status_code != 200:
+        return {"error": f"HF API error: {response.text}"}
+    return response.json()
 
-# Função classifica
+# Classificar texto
 def _classificar_texto(texto):
-    tokenizer, model = get_classifier()
-    inputs = tokenizer(texto, return_tensors="pt", truncation=True, padding=True, max_length=200)
-    with torch.no_grad():
-        outputs = model(**inputs)
-        probs = torch.softmax(outputs.logits, dim=-1)
-        pred = torch.argmax(probs, dim=-1).item()
-    label = "Produtivo" if pred == 0 else "Improdutivo"
-    score = probs[0][pred].item()
-    return label, score
+    result = query_hf(CLASSIFIER_URL, {"inputs": texto})
+    if "error" in result:
+        return "Erro", 0.0
+    # Dependendo do modelo, pode vir como lista de dicionários [{"label":"LABEL_0", "score":0.98}]
+    label = result[0][0]["label"]
+    score = result[0][0]["score"]
+    return ("Produtivo" if label == "LABEL_0" else "Improdutivo", score)
 
-# Função traduz texto
+# Traduz texto (mantém sua função)
 def _traduzir_texto(texto, source_lang='pt', target_lang='en'):
     return GoogleTranslator(source=source_lang, target=target_lang).translate(texto)
 
-# Função gera texto
-def gerarTexto(email: str) -> str:
-    tokenizer_email, model_email = get_generator()
-    email_en = _traduzir_texto(f'{email} Responda na visão da empresa', source_lang='pt', target_lang='en')
-    prompt = f"Question: {email_en}\nResponse:"
-    inputs = tokenizer_email.encode(prompt, return_tensors="pt")
-    with torch.no_grad():
-        output = model_email.generate(
-            inputs,
-            max_length=200,
-            num_return_sequences=1,
-            temperature=0.5,
-            top_p=0.8,
-            repetition_penalty=1.2,
-            pad_token_id=tokenizer_email.eos_token_id,
-            eos_token_id=tokenizer_email.eos_token_id
-        )
-    resposta = tokenizer_email.decode(output[0], skip_special_tokens=True)
-    if "\nResponse:" in resposta:
-        resposta = resposta.split("\nResponse:")[-1].strip()
-    resposta_pt = _traduzir_texto(resposta, source_lang='en', target_lang='pt')
-    return resposta_pt if resposta_pt else "Não consegui gerar uma resposta adequada."
+# Geração de resposta
+def gerarTexto(email: str):
+    email_en = _traduzir_texto(f'{email} Responda na visão da empresa', 'pt', 'en')
+    result = query_hf(GENERATOR_URL, {"inputs": email_en, "parameters": {"max_length": 200}})
+    if "error" in result:
+        return "Não consegui gerar uma resposta adequada."
 
-# Função processa PDF
+    resposta = result[0]["generated_text"]
+    resposta_pt = _traduzir_texto(resposta, 'en', 'pt')
+    return resposta_pt
+
+# Extrair texto PDF
 def _process_file(file):
     reader = PdfReader(file)
-    text = ""
-    for page in reader.pages:
-        text += page.extract_text()
+    text = "".join([page.extract_text() for page in reader.pages if page.extract_text()])
     return text
 
 # Analisar texto
