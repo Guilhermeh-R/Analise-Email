@@ -3,14 +3,21 @@ import requests
 from PyPDF2 import PdfReader
 from deep_translator import GoogleTranslator
 from dotenv import load_dotenv
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
+
+# Carrega o .env
 load_dotenv()
 
-HF_TOKEN = os.getenv("HF_TOKEN")  # export HF_TOKEN=seu_token
-headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 
-CLASSIFIER_URL = "https://api-inference.huggingface.co/models/Guilhermeh-r/modelo_classificador"
-GENERATOR_URL = "https://api-inference.huggingface.co/models/Guilhermeh-r/modelo_gerador"
+model_classifier = "Guilhermeh-r/modelo_classificador"
+tokenizer = AutoTokenizer.from_pretrained(model_classifier)
+model = AutoModelForSequenceClassification.from_pretrained(model_classifier)
+
+model_gerador = "Guilhermeh-r/modelo_gerador"
+tokenizer_gen = AutoTokenizer.from_pretrained(model_gerador)
+model_gen = AutoModelForSequenceClassification.from_pretrained(model_gerador)
+
 
 # Chama Hugging Face API
 def query_hf(api_url, payload):
@@ -35,6 +42,7 @@ def _traduzir_texto(texto, source_lang='pt', target_lang='en'):
 
 # Geração de resposta
 def gerarTexto(email: str):
+    print(HF_TOKEN)
     email_en = _traduzir_texto(f'{email} Responda na visão da empresa', 'pt', 'en')
     result = query_hf(GENERATOR_URL, {"inputs": email_en, "parameters": {"max_length": 200}})
     if "error" in result:
