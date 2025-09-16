@@ -13,30 +13,18 @@ HF_TOKEN = os.getenv("HF_TOKEN")
 _classifier = None
 _generator = None
 
-def get_classifier():
-    global _classifier
-    if _classifier is None:
-        tokenizer = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_classificador",token=HF_TOKEN)
-        model = AutoModelForSequenceClassification.from_pretrained("Guilhermeh-r/modelo_classificador",token=HF_TOKEN)
-        model.eval()
-        _classifier = (tokenizer, model)
-    return _classifier
+tokenizer_class = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_classificador", token=HF_TOKEN)
+model_class = AutoModelForSequenceClassification.from_pretrained("Guilhermeh-r/modelo_classificador", token=HF_TOKEN)
 
-def get_generator():
-    global _generator
-    if _generator is None:
-        tokenizer_email = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_gerador",token=HF_TOKEN)
-        model_email = GPT2LMHeadModel.from_pretrained("Guilhermeh-r/modelo_gerador",token=HF_TOKEN)
-        model_email.eval()
-        _generator = (tokenizer_email, model_email)
-    return _generator
+tokenizer_gen = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_gerador", token=HF_TOKEN)
+model_gen = GPT2LMHeadModel.from_pretrained("Guilhermeh-r/modelo_gerador", token=HF_TOKEN)
+
 
 # Função classifica
 def _classificar_texto(texto):
-    tokenizer, model = get_classifier()
-    inputs = tokenizer(texto, return_tensors="pt", truncation=True, padding=True, max_length=200)
+    inputs = tokenizer_class(texto, return_tensors="pt", truncation=True, padding=True, max_length=200)
     with torch.no_grad():
-        outputs = model(**inputs)
+        outputs = model_class(**inputs)
         probs = torch.softmax(outputs.logits, dim=-1)
         pred = torch.argmax(probs, dim=-1).item()
     label = "Produtivo" if pred == 0 else "Improdutivo"
@@ -49,24 +37,28 @@ def _traduzir_texto(texto, source_lang='pt', target_lang='en'):
 
 # Função gera texto
 def gerarTexto(email: str) -> str:
-    tokenizer_email, model_email = get_generator()
     email_en = _traduzir_texto(f'{email} Responda na visão da empresa', source_lang='pt', target_lang='en')
     prompt = f"Question: {email_en}\nResponse:"
-    inputs = tokenizer_email.encode(prompt, return_tensors="pt")
+    
+    inputs = tokenizer_gen(prompt, return_tensors="pt")
+    
     with torch.no_grad():
-        output = model_email.generate(
-            inputs,
+        output = model_gen.generate(
+            **inputs,
             max_length=200,
             num_return_sequences=1,
             temperature=0.5,
             top_p=0.8,
             repetition_penalty=1.2,
-            pad_token_id=tokenizer_email.eos_token_id,
-            eos_token_id=tokenizer_email.eos_token_id
+            pad_token_id=tokenizer_gen.eos_token_id,
+            eos_token_id=tokenizer_gen.eos_token_id
         )
-    resposta = tokenizer_email.decode(output[0], skip_special_tokens=True)
+    
+    resposta = tokenizer_gen.decode(output[0], skip_special_tokens=True)
+    
     if "\nResponse:" in resposta:
         resposta = resposta.split("\nResponse:")[-1].strip()
+    
     resposta_pt = _traduzir_texto(resposta, source_lang='en', target_lang='pt')
     return resposta_pt if resposta_pt else "Não consegui gerar uma resposta adequada."
 
