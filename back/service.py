@@ -4,6 +4,7 @@ from PyPDF2 import PdfReader
 from transformers import pipeline
 from deep_translator import GoogleTranslator
 <<<<<<< HEAD
+<<<<<<< HEAD
 from dotenv import load_dotenv
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
@@ -75,6 +76,27 @@ model_email.eval()
 #classificar = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 labels = ["Produtivo", "Improdutivo"]
 
+=======
+import requests
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, GPT2LMHeadModel
+import torch
+from transformers import GPT2LMHeadModel
+
+
+# Modelo classificador direto do HF
+tokenizer = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_classificador")
+model = AutoModelForSequenceClassification.from_pretrained("Guilhermeh-r/modelo_classificador")
+model.eval()  # modo avaliação
+
+# Modelo de geração de texto direto do HF
+tokenizer_email = AutoTokenizer.from_pretrained("Guilhermeh-r/modelo_geracao")
+model_email = GPT2LMHeadModel.from_pretrained("Guilhermeh-r/modelo_geracao")
+model_email.eval()
+
+#classificar = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+labels = ["Produtivo", "Improdutivo"]
+
+>>>>>>> parent of 51bb21f (Carregar sobdemanda)
 #Gera o texto com mlvoca
 def gerarTexto(email: str) -> str:
     # Traduz apenas o conteúdo do email para inglês
@@ -125,10 +147,18 @@ def analyze_text(text):
 # Funções auxiliares privadas
 
 #transforma o pdf em texto
+<<<<<<< HEAD
 >>>>>>> parent of 51bb21f (Carregar sobdemanda)
 def _process_file(file):
     reader = PdfReader(file)
     text = "".join([page.extract_text() for page in reader.pages if page.extract_text()])
+=======
+def _process_file(file):
+    reader = PdfReader(file)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
+>>>>>>> parent of 51bb21f (Carregar sobdemanda)
     return text
 
 #traduz o texto de um idioma para outro
